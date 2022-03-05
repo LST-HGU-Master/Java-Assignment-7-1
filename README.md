@@ -1,14 +1,8 @@
-# Autograding Example: Java
-This example project is written in Java, and tested with Gradle/JUnit.
+# 課題 7-1: クラスの定義とインスタンスの利用
 
 ### The assignment
-The tests are currently failing because of an output mismatch. Fixing the `System.out.println` in the main method will make the tests green.
+教科書のコード8-8とコード8-13の内容をそれぞれHeroクラスとProg71クラスとして
+入力し実行結果を確認しなさい。
+ただし、勇者の名前とHPは実行時引数で与えるように変更すること。
 
-### Setup command
-N/A
-
-### Run command
-`gradle test`
-
-### Notes
-- The JDK is installed on GitHub Actions machines, so you're also able to directly invoke `javac`, `java`, or any other CLI command included in the JDK. 
+### 実行例
