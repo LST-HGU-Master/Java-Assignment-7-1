@@ -1,18 +1,18 @@
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterEach;
 import java.io.*;
 /**
- * @version (20220526)
- *  set all exclamation marks to Zenkaku-character
+ * @version (20220526) set all exclamation marks to Zenkaku-character
+ * @version (20261021) revised for try-catch removal, index safety, and local stream cleanup
  **/
 public class HeroTest {
     InputStream originalIn;
     PrintStream originalOut;
     ByteArrayOutputStream bos;
     StandardInputStream in;
-    
+
     @BeforeEach
     void before() {
         //back up binding
@@ -21,17 +21,17 @@ public class HeroTest {
         //modify binding
         bos = new ByteArrayOutputStream();
         System.setOut(new PrintStream(bos));
-        
+
         in = new StandardInputStream();
         System.setIn(in);
     }
-    
+
     @AfterEach
     void after() {
-       System.setOut(originalOut);
-       System.setIn(originalIn);
+        System.setOut(originalOut);
+        System.setIn(originalIn);
     }
-    
+
     @Test
     public void testSleep()
     {
@@ -41,43 +41,37 @@ public class HeroTest {
         h.hp = 90;
         h.sleep();
 
-        // assertion
-        String[] prints = bos.toString().split("\r\n|\n");
-        String msg = "Hero.sleep()の出力結果が指定と異なります!";
-        try {
-            assertEquals(100, h.hp, "Hero.sleep()でのhpの値が指定と異なります!");
-            assertEquals(h.name + "は、眠って回復した！", prints[0], msg);
-        } catch (AssertionError err) {
-        // undo the binding in System
-            after();
-            throw err;
-        }
-        after();
+        assertEquals(100, h.hp, "Hero.sleep() での hp の値（100への回復）が正しくありません!");
+
+        String rawOutput = bos.toString().replace("\r\n", "\n");
+        assertTrue(rawOutput.endsWith("\n"), 
+            "Hero.sleep() の出力末尾に改行がありません! print ではなく println を使用しているか確認してください。"
+        );
+
+        String[] prints = rawOutput.split("\n");
+        assertTrue(prints.length >= 1, "Hero.sleep() の出力行数が不足しています!");
+        assertEquals(h.name + "は、眠って回復した！", prints[0], "Hero.sleep() の出力メッセージが指定と異なります!");
     }
 
     @Test
-    public void testSit()
-    {
-        // action
+    public void testSit() {
         Hero h = new Hero();
         h.name = "太郎";
         h.hp = 90;
-        int second = 90;
+        int second = 15;
         h.sit(second);
 
-        // assertion
-        String[] prints = bos.toString().split("\r\n|\n");
-        String msg = "Hero.sit()の出力結果が指定と異なります!";
-        try {
-            assertEquals(90+second, h.hp, "Hero.sit()でのhpの変化量が指定と異なります!");
-            assertEquals(h.name + "は、" + second + "秒座った！", prints[0], msg);
-            assertEquals("HPが" + second +"ポイント回復した", prints[1], msg);
-        } catch (AssertionError err) {
-        // undo the binding in System
-            after();
-            throw err;
-        }
-        after();
+        assertEquals(90 + second, h.hp, "Hero.sit() での hp の加算処理が正しくありません!");
+
+        String rawOutput = bos.toString().replace("\r\n", "\n");
+        assertTrue(rawOutput.endsWith("\n"), 
+            "Hero.sit() の出力末尾に改行がありません! 各行のメッセージ出力後に println を使用してください。"
+        );
+
+        String[] prints = rawOutput.split("\n");
+        assertTrue(prints.length >= 2, "Hero.sit() の出力行数が不足しています!");
+        assertEquals(h.name + "は、" + second + "秒座った！", prints[0], "Hero.sit() の1行目出力メッセージが正しくありません!");
+        assertEquals("HPが" + second + "ポイント回復した", prints[1], "Hero.sit() の2行目出力メッセージが正しくありません!");
     }
 
     @Test
@@ -89,49 +83,36 @@ public class HeroTest {
         h.hp = 90;
         h.slip();
 
-        // assertion
-        String[] prints = bos.toString().split("\r\n|\n");
-        String msg = "Hero.slip()の出力結果が指定と異なります!";
-        try {
-            assertEquals(85, h.hp, "Hero.slip()でのhpの変化量が指定と異なります!");
-            assertEquals(h.name + "は、転んだ！", prints[0], msg);
-            assertEquals("5のダメージ！", prints[1], msg);
-        } catch (AssertionError err) {
-        // undo the binding in System
-            after();
-            throw err;
-        }
-        after();
+        assertEquals(85, h.hp, "Hero.slip() での hp の減算処理（5ダメージ）が正しくありません!");
+
+        String rawOutput = bos.toString().replace("\r\n", "\n");
+        assertTrue(rawOutput.endsWith("\n"), 
+            "Hero.slip() の出力末尾に改行がありません! 各行のメッセージ出力後に println を使用してください。"
+        );
+
+        String[] prints = rawOutput.split("\n");
+        assertTrue(prints.length >= 2, "Hero.slip() の出力行数が不足しています!");
+        assertEquals(h.name + "は、転んだ！", prints[0], "Hero.slip() の1行目出力メッセージが正しくありません!");
+        assertEquals("5のダメージ！", prints[1], "Hero.slip() の2行目出力メッセージが正しくありません!");    
     }
 
     @Test
-    public void testRun()
-    {
-        PrintStream originalOut = System.out;
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        System.setOut(new PrintStream(bos));
-
-        // action
+    public void testRun() {
         Hero h = new Hero();
         h.name = "太郎";
         h.hp = 90;
         h.run();
 
-        // assertion
-        String[] prints = bos.toString().split("\r\n|\n");
-        String msg = "Hero.run()の出力結果が指定と異なります!";
-        try {
-            assertEquals(h.name + "は、逃げ出した！", prints[0], msg);
-            assertEquals("GAMEOVER", prints[1], msg);
-            assertEquals("最終HPは" + h.hp + "でした", prints[2], msg);
-        } catch (AssertionError err) {
-        // undo the binding in System
-            after();
-            throw err;
-        }
-        finally {
-            after();
-        }
+        String rawOutput = bos.toString().replace("\r\n", "\n");
+        assertTrue(rawOutput.endsWith("\n"), 
+            "Hero.run() の出力末尾に改行がありません! 各行のメッセージ出力後に println を使用してください。"
+        );
+
+        String[] prints = rawOutput.split("\n");
+        assertTrue(prints.length >= 3, "Hero.run() の出力行数が不足しています!");
+        assertEquals(h.name + "は、逃げ出した！", prints[0], "Hero.run() の1行目出力メッセージが正しくありません!");
+        assertEquals("GAMEOVER", prints[1], "Hero.run() の2行目出力メッセージ（GAMEOVER）が正しくありません!");
+        assertEquals("最終HPは" + h.hp + "でした", prints[2], "Hero.run() の3行目出力メッセージが正しくありません!");
     }
 
 }
